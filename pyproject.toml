@@ -8,12 +8,14 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "arxiv==1.4.8",
     "bs4>=0.0.2",
     "deeplake>=4.7.4",
     "ipykernel>=7.3.0",
     "langchain>=1.4.2",
     "langchain-community>=0.4.2",
     "langchain-openai>=1.6.2",
+    "markdown>=3.10.3",
     "numpy>=2.5.3",
     "pandas>=3.0.6",
     "pymupdf>=1.28.2",
@@ -23,6 +25,7 @@ dependencies = [
     "requests>=2.34.2",
     "tiktoken>=0.14.0",
     "unstructured>=0.27.6",
+    "youtube-transcript-api>=1.2.4",
 ]
 
 [project.scripts]
