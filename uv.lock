@@ -1229,6 +1229,18 @@ wheels = [
 ]
 
 [[package]]
+name = "langchain-deeplake"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "deeplake" },
+    { name = "langchain-core" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/31/03/afa4a38e3735f29ba0970b621cfce2f38006ec859f34dea8eb7d2afb6176/langchain_deeplake-0.1.0-py3-none-any.whl", hash = "sha256:ea377dfbaf5fff4de334afe778974b5b021f0a4250215da6dd210a7023395e3f", size = 13440, upload-time = "2025-02-20T12:26:42.083Z" },
+]
+
+[[package]]
 name = "langchain-nvidia-ai-endpoints"
 version = "1.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1305,7 +1317,9 @@ dependencies = [
     { name = "huggingface-hub" },
     { name = "ipykernel" },
     { name = "langchain" },
+    { name = "langchain-classic" },
     { name = "langchain-community" },
+    { name = "langchain-deeplake" },
     { name = "langchain-nvidia-ai-endpoints" },
     { name = "langchain-ollama" },
     { name = "langchain-openai" },
@@ -1330,7 +1344,9 @@ requires-dist = [
     { name = "huggingface-hub", specifier = ">=2.0.0" },
     { name = "ipykernel", specifier = ">=7.3.0" },
     { name = "langchain", specifier = ">=1.4.2" },
+    { name = "langchain-classic", specifier = ">=1.0.8" },
     { name = "langchain-community", specifier = ">=0.4.2" },
+    { name = "langchain-deeplake", specifier = ">=0.1.0" },
     { name = "langchain-nvidia-ai-endpoints", specifier = ">=1.4.3" },
     { name = "langchain-ollama", specifier = ">=1.1.0" },
     { name = "langchain-openai", specifier = ">=1.6.2" },
