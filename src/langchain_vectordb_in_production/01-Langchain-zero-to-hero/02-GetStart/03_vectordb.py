@@ -1,17 +1,39 @@
 #=================================================
-# most of the time we use deeplake for Vectordb
+# Most of the time we use Deep Lake for VectorDB
 #=================================================
 import os
+import sys
+from pathlib import Path
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_classic.vectorstores import deeplake, 
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+# 1. Load environment variables (from local dir and project root)
+current_dir = Path(__file__).parent
+load_dotenv(current_dir / ".env")
 load_dotenv()
-# API keys should be in environment variables
-os.environ["ACTIVELOOP_TOKEN"] = os.getenv('ACTIVELOOP_API_KEY')
 
-os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+# Set ACTIVELOOP_TOKEN for Deep Lake
+activeloop_token = (
+    os.getenv("ACTIVELOOP_TOKEN")
+    or os.getenv("ACTIVELOOP_API_KEY")
+    or os.getenv("DEEPLAKE_API_KEY")
+    or os.getenv("DEEPLAKE_API_TOKEN")
+)
+if activeloop_token:
+    os.environ["ACTIVELOOP_TOKEN"] = activeloop_token
+
+# 2. Compatibility shim: LangChain 1.x moved retrievers to langchain-classic,
+# but langchain-deeplake expects langchain.retrievers
+import langchain
+import langchain_classic.retrievers
+langchain.retrievers = langchain_classic.retrievers
+import langchain_classic.retrievers.self_query.base
+sys.modules["langchain.retrievers"] = langchain_classic.retrievers
+sys.modules["langchain.retrievers.self_query"] = langchain_classic.retrievers.self_query
+sys.modules["langchain.retrievers.self_query.base"] = langchain_classic.retrievers.self_query.base
+
+from langchain_deeplake import DeeplakeVectorStore
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Use a modern chat model instead of the legacy completion model
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
@@ -26,14 +48,19 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
 docs = text_splitter.create_documents(texts)
 
 # Create Deep Lake dataset
-my_activeloop_org_id = "sheshpalsingh2024's Org"
+# Activeloop username/org slug (must NOT contain spaces or apostrophes)
+my_activeloop_org_id = "sheshpalsingh2024"
 my_activeloop_dataset_name = "langchain_course_from_zero_to_hero"
 dataset_path = f"hub://{my_activeloop_org_id}/{my_activeloop_dataset_name}"
 
-db = deeplake(
+# Note: You can also use a local path if working offline:
+# dataset_path = "./data/deeplake_db"
+
+db = DeeplakeVectorStore(
     dataset_path=dataset_path,
     embedding_function=embeddings,
-    # overwrite=True
+    token=activeloop_token,
+    overwrite=True,
 )
 db.add_documents(docs)
 

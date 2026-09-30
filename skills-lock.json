@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "deeplake": {
+      "source": "activeloopai/deeplake-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deeplake/SKILL.md",
+      "computedHash": "51a7ec9b1e15a202bcb1e5a88fc35c7b8844499424dd37b69b7875355fd7678a"
+    }
+  }
+}
