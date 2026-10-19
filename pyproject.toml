@@ -17,6 +17,7 @@ dependencies = [
     "langchain-classic>=1.0.8",
     "langchain-community>=0.4.2",
     "langchain-deeplake>=0.1.0",
+    "langchain-groq>=1.1.3",
     "langchain-nvidia-ai-endpoints>=1.4.3",
     "langchain-ollama>=1.1.0",
     "langchain-openai>=1.6.2",

@@ -1,6 +1,6 @@
-#=================================================
+# =================================================
 # Most of the time we use Deep Lake for VectorDB
-#=================================================
+# =================================================
 import os
 import sys
 from pathlib import Path
@@ -18,6 +18,8 @@ activeloop_token = (
     or os.getenv("DEEPLAKE_API_KEY")
     or os.getenv("DEEPLAKE_API_TOKEN")
 )
+
+
 if activeloop_token:
     os.environ["ACTIVELOOP_TOKEN"] = activeloop_token
 
@@ -25,24 +27,34 @@ if activeloop_token:
 # but langchain-deeplake expects langchain.retrievers
 import langchain
 import langchain_classic.retrievers
+
 langchain.retrievers = langchain_classic.retrievers
 import langchain_classic.retrievers.self_query.base
+
 sys.modules["langchain.retrievers"] = langchain_classic.retrievers
 sys.modules["langchain.retrievers.self_query"] = langchain_classic.retrievers.self_query
-sys.modules["langchain.retrievers.self_query.base"] = langchain_classic.retrievers.self_query.base
+sys.modules["langchain.retrievers.self_query.base"] = (
+    langchain_classic.retrievers.self_query.base
+)
 
 from langchain_deeplake import DeeplakeVectorStore
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_ollama.embeddings import OllamaEmbeddings
+from langchain_groq import ChatGroq
+# os.environ['OPENAI_API_KEY'] = os.getenv("OPENAI_API_KEY")
 
+os.environ['GROQ_API_KEY'] = os.getenv("GROQ_API_KEY")
 # Use a modern chat model instead of the legacy completion model
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+llm =ChatGroq(model ="qwen/qwen3.8-27b")
+# llm = ChatOpenAI(model="gpt-4.1-mini", temperature=0)
+ollama_embedding = OllamaEmbeddings(model="nomic-embed-text:v1.5")
+# embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 # Create documents
 texts = [
     "Napoleon Bonaparte was born in 15 August 1769",
-    "Louis XIV was born in 5 September 1638"
+    "Louis XIV was born in 5 September 1638",
 ]
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
 docs = text_splitter.create_documents(texts)
@@ -50,7 +62,7 @@ docs = text_splitter.create_documents(texts)
 # Create Deep Lake dataset
 # Activeloop username/org slug (must NOT contain spaces or apostrophes)
 my_activeloop_org_id = "sheshpalsingh2024"
-my_activeloop_dataset_name = "langchain_course_from_zero_to_hero"
+my_activeloop_dataset_name = "langchain_VECTORDB"
 dataset_path = f"hub://{my_activeloop_org_id}/{my_activeloop_dataset_name}"
 
 # Note: You can also use a local path if working offline:
@@ -58,7 +70,7 @@ dataset_path = f"hub://{my_activeloop_org_id}/{my_activeloop_dataset_name}"
 
 db = DeeplakeVectorStore(
     dataset_path=dataset_path,
-    embedding_function=embeddings,
+    embedding_function=ollama_embedding,
     token=activeloop_token,
     overwrite=True,
 )
@@ -66,6 +78,7 @@ db.add_documents(docs)
 
 # Build a retriever (modern vector store API)
 retriever = db.as_retriever(search_kwargs={"k": 2})
+
 
 # Modern RAG: a simple function instead of RetrievalQA
 def rag_query(question: str) -> str:
@@ -78,5 +91,37 @@ def rag_query(question: str) -> str:
     )
     return llm.invoke(prompt).content
 
+
 # Run it
 print(rag_query("When was Napoleon Bonaparte born?"))
+
+
+# Agentic Role
+from langchain.agents import create_agent
+from langchain_core.tools import tool
+
+# Wrap your existing RetrievalQA chain as a tool
+@tool
+def retrieval_qa_tool(question: str) -> str:
+    """Answer questions using information retrieved from documents."""
+    response = retriever.invoke({"query": question})
+    return response.get("result", str(response))
+
+# Create the agent
+agent = create_agent(
+    model=llm,
+    tools=[retrieval_qa_tool],
+    system_prompt=(
+        "You are a helpful assistant. "
+        "Use the retrieval_qa_tool to answer questions about documents."
+    ),
+)
+
+# Run the agent
+response = agent.invoke({
+    "messages": [
+        {"role": "user", "content": "What information is available in the documents?"}
+    ]
+})
+
+print(response["messages"][-1].content)
